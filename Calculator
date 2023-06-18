@@ -1,0 +1,8 @@
+def calc():
+  n=int(input("Enter number1: "))
+  o=int(input("Enter number2: "))
+  print("The sum of two values are",(n+o))
+  print("The difference of two values are",(n-o))
+  print("The multipliction of two values are",(n*o))
+  print("The division of two values are",(n/o)) 
+calc()
