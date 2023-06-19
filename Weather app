@@ -1,0 +1,123 @@
+import requests
+import json
+import matplotlib.pyplot as plt
+from datetime import datetime, timedelta
+
+def get_weather_data(city):
+    """
+    This function fetches the current weather and forecast data for a given city from the OpenWeatherMap API.
+    
+    Parameters:
+    city (str): The name of the city for which weather data is to be fetched
+    
+    Returns:
+    dict: A dictionary containing the current weather and forecast data for the city
+    """
+    # Set the API endpoint and parameters
+    url = "https://api.openweathermap.org/data/2.5/forecast"
+    params = {
+        "q": city,
+        "appid": "your_api_key_here",
+        "units": "metric"
+    }
+    
+    # Send the API request and get the response
+    response = requests.get(url, params=params)
+    
+    # Check if the request was successful
+    if response.status_code == 200:
+        # Parse the response JSON data
+        data = json.loads(response.text)
+        
+        # Extract the current weather data
+        current_weather = {
+            "date_time": datetime.fromtimestamp(data["list"][0]["dt"]).strftime("%Y-%m-%d %H:%M:%S"),
+            "temperature": data["list"][0]["main"]["temp"],
+            "humidity": data["list"][0]["main"]["humidity"],
+            "wind_speed": data["list"][0]["wind"]["speed"],
+            "weather_condition": data["list"][0]["weather"][0]["description"]
+        }
+        
+        # Extract the forecast data for the next 7 days
+        forecast_data = []
+        for i in range(1, 8):
+            forecast = {
+                "date": (datetime.now() + timedelta(days=i)).strftime("%Y-%m-%d"),
+                "temperature": data["list"][i*8]["main"]["temp"],
+                "humidity": data["list"][i*8]["main"]["humidity"],
+                "weather_condition": data["list"][i*8]["weather"][0]["description"]
+            }
+            forecast_data.append(forecast)
+        
+        # Return the current weather and forecast data
+        return {"current_weather": current_weather, "forecast_data": forecast_data}
+    else:
+        # Log the error
+        print(f"Error: Unable to fetch weather data for {city}")
+        return None
+
+def plot_weather_data(weather_data):
+    """
+    This function plots the temperature change, humidity change, and weather conditions of each day in the forecast data.
+    
+    Parameters:
+    weather_data (dict): A dictionary containing the current weather and forecast data for a city
+    """
+    # Extract the forecast data
+    forecast_data = weather_data["forecast_data"]
+    
+    # Extract the temperature, humidity, and weather condition data for each day
+    temperatures = [forecast["temperature"] for forecast in forecast_data]
+    humidity = [forecast["humidity"] for forecast in forecast_data]
+    weather_conditions = [forecast["weather_condition"] for forecast in forecast_data]
+    
+    # Plot the temperature data
+    plt.plot(temperatures)
+    plt.title("Temperature Change")
+    plt.xlabel("Days")
+    plt.ylabel("Temperature (°C)")
+    plt.show()
+    
+    # Plot the humidity data
+    plt.plot(humidity)
+    plt.title("Humidity Change")
+    plt.xlabel("Days")
+    plt.ylabel("Humidity (%)")
+    plt.show()
+    
+    # Plot the weather condition data
+    x = range(len(weather_conditions))
+    plt.bar(x, height=temperatures, color="blue")
+    plt.bar(x, height=humidity, color="green")
+    plt.xticks(x, weather_conditions)
+    plt.title("Weather Conditions")
+    plt.xlabel("Weather Condition")
+    plt.ylabel("Temperature (°C) / Humidity (%)")
+    plt.show()
+
+def weather_forecast_app(city):
+    """
+    This function fetches the weather data for a given city and displays the current weather and forecast data.
+    
+    Parameters:
+    city (str): The name of the city for which weather data is to be fetched
+    """
+    # Fetch the weather data
+    weather_data = get_weather_data(city)
+    
+    # Check if the weather data was fetched successfully
+    if weather_data is not None:
+        # Display the current weather data
+        current_weather = weather_data["current_weather"]
+        print(f"Current Weather in {city}:")
+        print(f"Date/Time: {current_weather['date_time']}")
+        print(f"Temperature: {current_weather['temperature']}°C")
+        print(f"Humidity: {current_weather['humidity']}%")
+        print(f"Wind Speed: {current_weather['wind_speed']} m/s")
+        print(f"Weather Condition: {current_weather['weather_condition']}")
+        
+        # Plot the forecast data
+        plot_weather_data(weather_data)
+    else:
+        # Display an error message
+        print(f"Unable to fetch weather data for {city}")
